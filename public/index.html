@@ -3,18 +3,24 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Aithor AI</title>
+  <title>Aithor - Memory Chat</title>
   <link rel="stylesheet" href="style.css" />
-  <link rel="icon" href="favicon.ico" type="image/x-icon">
+  <link rel="icon" href="favicon.ico" />
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
-  <div class="container">
-    <img src="logo.png" class="logo" alt="Aithor Logo" />
-    <h1>Aithor 🤖</h1>
-    <textarea id="input" placeholder="Ask Aithor anything..."></textarea>
-    <button onclick="askAI()">Ask Aithor</button>
-    <div id="response"></div>
+  <div class="chat-container">
+    <header>
+      <img src="logo.png" alt="Aithor Logo" class="logo">
+      <h1>Aithor</h1>
+    </header>
+    <main id="chat-box">
+      <div class="message bot">Hello! I’m Aithor. Ask me anything ✨</div>
+    </main>
+    <footer>
+      <textarea id="input" placeholder="Type your message..."></textarea>
+      <button onclick="askAI()">➤</button>
+    </footer>
   </div>
   <script src="script.js"></script>
 </body>
