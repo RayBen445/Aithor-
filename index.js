@@ -14,12 +14,12 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
-// ✅ NEW OpenAI setup for latest SDK
+// ✅ New OpenAI setup (latest SDK)
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-// === API Endpoint ===
+// === AI Chat Endpoint ===
 app.post("/ask", async (req, res) => {
   const prompt = req.body.prompt;
   if (!prompt) return res.status(400).json({ error: "Prompt is required" });
@@ -37,9 +37,9 @@ app.post("/ask", async (req, res) => {
   }
 });
 
-// === Telegram Bot ===
+// === Telegram Bot Setup ===
 const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, { polling: true });
-const WEB_APP_URL = process.env.WEB_APP_URL || "https://aithor.onrender.com";
+const WEB_APP_URL = process.env.WEB_APP_URL || "https://your-app-name.onrender.com";
 
 bot.onText(/\/start/, (msg) => {
   bot.sendMessage(msg.chat.id, "Welcome to Aithor! Tap below to open the AI chat 👇", {
@@ -47,6 +47,11 @@ bot.onText(/\/start/, (msg) => {
       inline_keyboard: [[{ text: "Open Aithor", web_app: { url: WEB_APP_URL } }]],
     },
   });
+});
+
+// ✅ Serve index.html on root URL
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
 app.listen(port, () => {
