@@ -1,69 +1,47 @@
 const express = require("express");
-const path = require("path");
-const cors = require("cors");
+const bodyParser = require("body-parser");
 const dotenv = require("dotenv");
-const OpenAI = require("openai");
-const TelegramBot = require("node-telegram-bot-api");
+const { Configuration, OpenAIApi } = require("openai");
+const path = require("path");
 
 dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 3000;
 
-app.use(cors());
-app.use(express.json());
+// Serve static files from public/
 app.use(express.static(path.join(__dirname, "public")));
+app.use(bodyParser.json());
 
-// ✅ OpenAI setup
-const openai = new OpenAI({
+// Setup OpenAI
+const configuration = new Configuration({
   apiKey: process.env.OPENAI_API_KEY,
 });
+const openai = new OpenAIApi(configuration);
 
-// === AI Endpoint ===
+// === Memory-based /ask endpoint ===
 app.post("/ask", async (req, res) => {
-  const prompt = req.body.prompt;
-  if (!prompt) return res.status(400).json({ error: "Prompt is required" });
+  const messages = req.body.messages;
+
+  if (!messages || !Array.isArray(messages)) {
+    return res.status(400).json({ error: "Invalid messages array." });
+  }
 
   try {
-    const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
-      messages: [{ role: "user", content: prompt }],
+    const completion = await openai.createChatCompletion({
+      model: "gpt-3.5-turbo", // or "gpt-4" if available
+      messages: messages,     // 🧠 full memory-enabled conversation
     });
 
-    res.json({ reply: completion.choices[0].message.content.trim() });
-  } catch (error) {
-    console.error("OpenAI error:", error.message);
-    res.status(500).json({ error: "Something went wrong with AI" });
+    const reply = completion.data.choices[0].message.content;
+    res.json({ reply });
+  } catch (err) {
+    console.error("OpenAI error:", err.message);
+    res.status(500).json({ error: "Failed to contact OpenAI." });
   }
 });
 
-// === Telegram Bot (Webhook Mode) ===
-const token = process.env.TELEGRAM_BOT_TOKEN;
-const WEB_APP_URL = process.env.WEB_APP_URL || `https://${process.env.RENDER_EXTERNAL_HOSTNAME}`;
-
-const bot = new TelegramBot(token, { webHook: { port: 3001 } }); // webhook on separate port (optional)
-bot.setWebHook(`${WEB_APP_URL}/bot${token}`);
-
-// Handle incoming Telegram messages
-app.post(`/bot${token}`, (req, res) => {
-  bot.processUpdate(req.body);
-  res.sendStatus(200);
-});
-
-// Bot command: /start
-bot.onText(/\/start/, (msg) => {
-  bot.sendMessage(msg.chat.id, "Welcome to Aithor! Tap below to open the AI chat 👇", {
-    reply_markup: {
-      inline_keyboard: [[{ text: "Open Aithor", web_app: { url: WEB_APP_URL } }]],
-    },
-  });
-});
-
-// Serve frontend
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
-});
-
+// Start the server
 app.listen(port, () => {
-  console.log(`✅ Aithor is running at ${WEB_APP_URL}`);
+  console.log(`✅ Aithor AI is live at http://localhost:${port}`);
 });
